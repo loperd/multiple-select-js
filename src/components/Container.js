@@ -35,6 +35,10 @@ class Container {
   _buildButton () {
     this.$button = new SelectButton({ root: this.$root })
     this.$root.$el.appendChild(this.$button.el)
+
+    if (!this.$root.$options.customPlaceholder) {
+      this.$button.setupListener()
+    }
   }
 
   _buildDropdownSelect () {

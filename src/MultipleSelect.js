@@ -10,14 +10,16 @@ class MultipleSelect {
     selectMultipleContainerId++
 
     const defaultOptions = {
-      placeholder: 'Select'
+      placeholder: 'Select',
+      customPlaceholder: false,
     }
 
+    this.$elId = elId;
     this.$store = new Store()
+    this.$options = { ...defaultOptions, ...options }
     let { el, select, isMultiple, items, selectedItems } = this._buildRootElement(elId)
     this.$el = el
     this.$select = select
-    this.$options = { ...defaultOptions, ...options }
     this.$store.isMultiple = isMultiple
     this.$store.items = items
     this.$store.selectedItems = selectedItems
@@ -45,20 +47,74 @@ class MultipleSelect {
 
       const inputEvent = document.createEvent('HTMLEvents')
       inputEvent.initEvent('input', true, true)
-      
+
       this.$select.dispatchEvent(changeEvent)
       this.$select.dispatchEvent(inputEvent)
     })
 
     // when the container is done rendered, the dropdown
     // will automatically focused
-    let observer = new MutationObserver(() => {
+    this.$observer = new MutationObserver(() => {
       if (this.$el.classList.contains('opened')) {
         this.$container.$dropdownSelect.$input.focus()
       }
     })
 
-    observer.observe(this.$el, { attributes: true, childList: true });
+    this.$observer.observe(this.$el, { attributes: true, childList: true });
+    this.$store.emit('render', { el: this.$el, items: items });
+  }
+
+  reRender() {
+    this.$el.remove();
+    this.$observer.disconnect();
+    this.$store.removeAllListeners();
+
+    let { el, select, isMultiple, items, selectedItems } = this._buildRootElement(this.$elId)
+    this.$el = el
+    this.$select = select
+    this.$store.isMultiple = isMultiple
+    this.$store.items = items
+    this.$store.selectedItems = selectedItems
+
+    this.$container = new Container({
+      root: this
+    })
+
+    // syncing with the actual select
+    this.$store.on('selectedItemsChange', (selectedItems) => {
+      this.$select.querySelectorAll('option').forEach(option => {
+        if (selectedItems.find(item => item.value === option.value)) {
+          option.setAttribute('selected', true)
+        } else {
+          option.removeAttribute('selected')
+        }
+      })
+
+      if (selectedItems.length < 1) {
+        this.$select.value = ''
+      }
+
+      const changeEvent = document.createEvent('HTMLEvents')
+      changeEvent.initEvent('change', true, true)
+
+      const inputEvent = document.createEvent('HTMLEvents')
+      inputEvent.initEvent('input', true, true)
+
+      this.$select.dispatchEvent(changeEvent)
+      this.$select.dispatchEvent(inputEvent)
+    })
+
+    // when the container is done rendered, the dropdown
+    // will automatically focused
+    this.$observer = new MutationObserver(() => {
+      if (this.$el.classList.contains('opened')) {
+        this.$container.$dropdownSelect.$input.focus()
+      }
+    })
+
+    this.$observer.observe(this.$el, { attributes: true, childList: true });
+
+    this.$store.emit('render', { el: this.$el, items: items });
   }
 
   /**
@@ -76,6 +132,7 @@ class MultipleSelect {
     let selectedItems = []
 
     root.setAttribute('id', `multiple-select-container-${selectMultipleContainerId}`)
+    root.classList.add('multiple-select-container')
     root.style.position = 'relative'
     
     Array.from(select.options).forEach(option => {
@@ -100,7 +157,6 @@ class MultipleSelect {
       function isTheSameComponents () {
         let found = true
 
-        console.log({ values, selectedItems })
         values.forEach(value => {
           if (!selectedItems.find(item => item === value)) {
             found = false
@@ -121,7 +177,7 @@ class MultipleSelect {
 
     select.insertAdjacentElement('afterend', root)
     select.hidden = true
-    
+
 
     let isMultiple = select.multiple
 

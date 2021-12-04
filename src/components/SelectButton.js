@@ -47,28 +47,36 @@ class SelectButton {
     }
 
     let selectedItems = this.$root.$store.selectedItems
-    let buttonText = null
 
-    if (this.$root.$store.isMultiple && selectedItems.length) {
-      buttonText = `${selectedItems.length} selected`
-    } else {
-      buttonText = selectedItems.length ?
-        selectedItems[0].label : (this.$root.$options.placeholder || 'Select')
-    }
+    this.$root.$store.emit('renderTitleText', { selectedItems, isMultiple: this.$root.$store.isMultiple });
+  }
 
-    this._button
-      .querySelector('span.content')
-      .innerText = buttonText
+  setupListener() {
+    this.$root.$store.on('renderTitleText', ({ selectedItems, isMultiple }) => {
+      let buttonText;
 
-    if (this.$root.$store.isOpened) {
+      if (isMultiple && selectedItems.length) {
+        buttonText = selectedItems.map(s => s.label).join(', ');
+      } else {
+        buttonText = selectedItems.length
+            ? selectedItems[0].label
+            : (this.$root.$options.placeholder || 'Select')
+      }
+
       this._button
-        .querySelector('span.caret')
-        .innerHTML = '&#9652;'
-    } else {
-      this._button
-        .querySelector('span.caret')
-        .innerHTML = '&#9662;'
-    }
+          .querySelector('span.content')
+          .innerText = buttonText
+
+      if (this.$root.$store.isOpened) {
+        this._button
+            .querySelector('span.caret')
+            .innerHTML = '&#9652;'
+      } else {
+        this._button
+            .querySelector('span.caret')
+            .innerHTML = '&#9662;'
+      }
+    })
   }
 }
 

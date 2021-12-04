@@ -85,8 +85,6 @@ class SearchInput {
           }
 
           this.$root.$store.selectedItems = selectedItems
-          
-          console.log(selectedItem, { index })
         }
       }
     })

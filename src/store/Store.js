@@ -60,7 +60,6 @@ class Store extends EventEmitter {
     if (this.keyword !== keyword.trim()) {
       this._keyword = keyword.trim()
       this._hoveredItemIndex = null
-      console.log('keywordChange')
       this.emit('keywordChange', keyword)
     }
   }
